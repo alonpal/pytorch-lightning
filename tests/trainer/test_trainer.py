@@ -38,7 +38,8 @@ def test_no_val_module(monkeypatch, tmpdir, tmpdir_server, url_ckpt):
     trainer = Trainer(
         max_epochs=1,
         logger=logger,
-        checkpoint_callback=ModelCheckpoint(tmpdir)
+        checkpoint_callback=ModelCheckpoint(tmpdir),
+        default_root_dir=tmpdir,
     )
     # fit model
     result = trainer.fit(model)
@@ -79,7 +80,8 @@ def test_no_val_end_module(monkeypatch, tmpdir, tmpdir_server, url_ckpt):
     trainer = Trainer(
         max_epochs=1,
         logger=logger,
-        checkpoint_callback=ModelCheckpoint(tmpdir)
+        checkpoint_callback=ModelCheckpoint(tmpdir),
+        default_root_dir=tmpdir,
     )
     result = trainer.fit(model)
 
@@ -166,11 +168,13 @@ def test_gradient_accumulation_scheduling(tmpdir):
     model = EvalModelTemplate()
     schedule = {1: 2, 3: 4}
 
-    trainer = Trainer(accumulate_grad_batches=schedule,
-                      limit_train_batches=0.1,
-                      limit_val_batches=0.1,
-                      max_epochs=2,
-                      default_root_dir=tmpdir)
+    trainer = Trainer(
+        accumulate_grad_batches=schedule,
+        limit_train_batches=0.1,
+        limit_val_batches=0.1,
+        max_epochs=2,
+        default_root_dir=tmpdir,
+    )
 
     # for the test
     trainer.optimizer_step = _optimizer_step
@@ -298,7 +302,8 @@ def test_model_checkpoint_only_weights(tmpdir):
 
     trainer = Trainer(
         max_epochs=1,
-        checkpoint_callback=ModelCheckpoint(tmpdir, save_weights_only=True)
+        checkpoint_callback=ModelCheckpoint(tmpdir, save_weights_only=True),
+        default_root_dir=tmpdir,
     )
     # fit model
     result = trainer.fit(model)
@@ -432,7 +437,7 @@ def test_trainer_max_steps_and_epochs(tmpdir):
     trainer_options.update(
         default_root_dir=tmpdir,
         max_epochs=3,
-        max_steps=num_train_samples + 10
+        max_steps=num_train_samples + 10,
     )
 
     # fit model
@@ -446,7 +451,7 @@ def test_trainer_max_steps_and_epochs(tmpdir):
     # define less train epochs than steps
     trainer_options.update(
         max_epochs=2,
-        max_steps=trainer_options['max_epochs'] * 2 * num_train_samples
+        max_steps=trainer_options['max_epochs'] * 2 * num_train_samples,
     )
 
     # fit model
@@ -469,7 +474,7 @@ def test_trainer_min_steps_and_epochs(tmpdir):
         early_stop_callback=EarlyStopping(monitor='val_loss', min_delta=1.0),
         val_check_interval=2,
         min_epochs=1,
-        max_epochs=2
+        max_epochs=2,
     )
 
     # define less min steps than 1 epoch
@@ -592,7 +597,7 @@ def test_test_checkpoint_path(tmpdir, ckpt_path, save_top_k):
             assert loaded_checkpoint_path == ckpt_path
 
 
-def test_disabled_validation():
+def test_disabled_validation(tmpdir):
     """Verify that `limit_val_batches=0` disables the validation loop unless `fast_dev_run=True`."""
 
     class CurrentModel(EvalModelTemplate):
@@ -617,6 +622,7 @@ def test_disabled_validation():
         limit_train_batches=0.4,
         limit_val_batches=0.0,
         fast_dev_run=False,
+        default_root_dir=tmpdir,
     )
 
     trainer = Trainer(**trainer_options)
